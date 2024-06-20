@@ -47,6 +47,7 @@ class StressRaspberry:
         self.commander = init_commander(os.path.join('mqtt_system_governor', 'config.ini'))
         self.command_queue = Queue()
         self.fill_command_queue()
+        self.operator_process = None
         self._power_data_logger_process = None
         self._save_logger_output = Event()
         self._awaiting_for_feedback = Event()
@@ -79,14 +80,22 @@ class StressRaspberry:
         result = dict(zip(keys, values))
         return result
 
-    @staticmethod
-    def start_operator():
+    def start_operator(self):
         with open(os.devnull, 'w') as devnull:
-            process = subprocess.Popen(START_OPERATOR_COMMAND, stdout=devnull, stderr=devnull, shell=True)
-            return process
+            self.operator_process = subprocess.Popen(START_OPERATOR_COMMAND, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, shell=True)
+            return self.operator_process
 
     def run(self):
-        operator = self.start_operator()
+        operator_process = self.start_operator()
+        while True:
+            operator_output = operator_process.stdout.readline()
+            if operator_output == '' and operator_process.poll() is not None:
+                break
+            if operator_output:
+                print(operator_output.strip())
+                if 'Registered clients:' in operator_output:
+                    break
+
         self.commander.connect()
         self.start_power_data_logger()
 
