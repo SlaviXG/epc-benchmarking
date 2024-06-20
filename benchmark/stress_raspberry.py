@@ -1,5 +1,6 @@
 import configparser
 import json
+import time, datetime
 import os.path
 import subprocess
 from queue import Queue
@@ -7,6 +8,7 @@ from threading import Event
 
 
 from mqtt_system_governor.commander import BaseCommander
+from mqtt_system_governor import color_log
 
 # !!!
 # Make sure that jsonify = True and save_feedback = False inside mqtt_system_governor/config.ini
@@ -26,6 +28,10 @@ def save_feedback_to_file(feedback: str):
         f.write(feedback + '\n')
 
 
+def get_current_time():
+    return datetime.datetime.now().replace(microsecond=0).isoformat()
+
+
 class StressRaspberry:
     class Commander(BaseCommander):
         def __init__(self, broker, port, command_loader_topic, response_topic, jsonify):
@@ -40,12 +46,12 @@ class StressRaspberry:
                     if feedback['client_id'] == RASPBERRY_CLIENT_ID:
                         save_feedback_to_file(json.dumps(feedback))
                         FEEDBACK_QUEUE.put(feedback)
-                        print(f"Feedback received and saved (command: {feedback['command']})")
+                        print(f"{get_current_time()} -- Feedback saved (command: {feedback['command']})")
                         print(f"{json.dumps(feedback, indent=2)}")
                 except json.JSONDecodeError as e:
-                    print(f"(!) Please make sure that feedback was sent in a JSON format\n{feedback}")
+                    print(f"(!) -- {get_current_time()} --Please make sure that feedback was sent in a JSON format\n{feedback}")
             else:
-                print(f"(!) Please set the `jsonify` option to True inside mqtt_system_governor/config.ini")
+                print(f"(!) -- {get_current_time()} --Please set the `jsonify` option to True inside mqtt_system_governor/config.ini")
 
     def __init__(self):
         self.commander = self.init_commander(os.path.join('mqtt_system_governor', 'config.ini'))
@@ -117,8 +123,9 @@ class StressRaspberry:
         first_line_passed = False
         initial_temperature = None
         current_command = None
+        previous_cooling_time = time.time()
 
-        print("Starting benchmarking...")
+        color_log.log_info(f"{get_current_time()} -- Starting benchmarking...")
 
         with open(LOGGER_OUTPUT_FILE, 'w') as f:
             self.start_power_data_logger()
@@ -126,7 +133,7 @@ class StressRaspberry:
                 # Read power data logger output
                 logger_output = self._power_data_logger_process.stdout.readline()
                 if first_line_passed and logger_output == '' and self._power_data_logger_process.poll() is not None:
-                    print("The logger process was stopped.")
+                    color_log.log_warning(f"{get_current_time()} -- The logger process was stopped.")
                     break
                 if logger_output.strip():
                     if self._save_logger_output.is_set():
@@ -141,17 +148,20 @@ class StressRaspberry:
                 except Exception as e:
                     # Occurs when trying to convert string to float, making sure to pass the first logger output line
                     first_line_passed = True
-                    print(f"First output line passed: ({e})")
+                    color_log.log_info(f"{get_current_time()} -- First output line passed: ({e})")
                     continue
 
                 # Set initial temperature if it wasn't set
                 if initial_temperature is None:
                     initial_temperature = logger_output['temp_C_ema']
-                    print(f"Initial temperature: {initial_temperature} C")
+                    color_log.log_error(f"{get_current_time()} -- Initial temperature: {initial_temperature} C")
 
                 # Check if there is a need to cool down the device
                 if logger_output['temp_C_ema'] - initial_temperature > MIN_TEMPERATURE_DIFFERENCE:
                     self._save_logger_output.clear()
+                    if time.time() - previous_cooling_time > 60:
+                        color_log.log_warning(f"(!) -- {get_current_time()} -- Overheat -- Temporarily paused for cooling down")
+                        previous_cooling_time = time.time()
                 else:
                     if not self._awaiting_for_feedback.is_set():
                         # Start saving output
@@ -175,5 +185,5 @@ class StressRaspberry:
                         else:
                             pass
 
-
-
+        color_log.log_info(f"{get_current_time()} -- Benchmarking finished")
+        print(f"{get_current_time()} -- processing obtained data")
