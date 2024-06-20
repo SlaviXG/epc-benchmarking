@@ -111,7 +111,7 @@ class StressRaspberry:
             while True:
                 # Read power data logger output
                 logger_output = self._power_data_logger_process.stdout.readline()
-                if logger_output == '' and self._power_data_logger_process.poll() is not None:
+                if first_line_passed and logger_output == '' and self._power_data_logger_process.poll() is not None:
                     break
                 if logger_output:
                     if self._save_logger_output.is_set():
