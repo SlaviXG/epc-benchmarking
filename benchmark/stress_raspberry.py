@@ -126,6 +126,7 @@ class StressRaspberry:
                     # Occurs when trying to convert string to float, making sure to pass the first logger output line
                     first_line_passed = True
                     print(f"First output line passed: ({e})")
+                    continue
 
                 # Set initial temperature if it wasn't set
                 if initial_temperature is None:
