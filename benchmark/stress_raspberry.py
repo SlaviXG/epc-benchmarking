@@ -148,7 +148,6 @@ class StressRaspberry:
 
                         # Send the command
                         self.commander.send_command(RASPBERRY_CLIENT_ID, current_command)
-                        print(f"Command sent ({current_command})")
                         self._awaiting_for_feedback.set()
                     else:
                         feedback = FEEDBACK_QUEUE.get()
