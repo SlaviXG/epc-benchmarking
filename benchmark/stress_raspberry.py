@@ -121,6 +121,7 @@ class StressRaspberry:
 
         # Set additional metrics
         first_line_passed = False
+        logger_started = False
         initial_temperature = None
         current_command = None
         previous_cooling_time = time.time()
@@ -140,7 +141,11 @@ class StressRaspberry:
                         f.write(logger_output)
                         f.flush()
                 else:
-                    if not self._awaiting_for_feedback.is_set():
+                    # Wait for logger to start giving the output out
+                    if not logger_started:
+                        continue
+                    # Exit the loop after benchmarking
+                    elif not self._awaiting_for_feedback.is_set():
                         break
 
                 try:
@@ -192,4 +197,4 @@ class StressRaspberry:
                             pass
 
         color_log.log_info(f"{get_current_time()} -- Benchmarking finished")
-        print(f"{get_current_time()} -- processing obtained data")
+        print(f"{get_current_time()} -- Processing obtained data")
