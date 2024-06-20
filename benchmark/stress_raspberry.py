@@ -1,9 +1,8 @@
 import json
 import os.path
 import subprocess
-import time
 from queue import Queue
-from threading import Thread, Event
+from threading import Event
 
 
 from mqtt_system_governor.commander import BaseCommander, init_commander
@@ -111,6 +110,7 @@ class StressRaspberry:
                 # Read power data logger output
                 logger_output = self._power_data_logger_process.stdout.readline()
                 if first_line_passed and logger_output == '' and self._power_data_logger_process.poll() is not None:
+                    print("The logger process was stopped.")
                     break
                 if logger_output.strip():
                     if self._save_logger_output.is_set():
