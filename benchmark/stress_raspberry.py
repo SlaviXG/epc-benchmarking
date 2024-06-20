@@ -113,7 +113,7 @@ class StressRaspberry:
                 logger_output = self._power_data_logger_process.stdout.readline()
                 if first_line_passed and logger_output == '' and self._power_data_logger_process.poll() is not None:
                     break
-                if logger_output:
+                if logger_output.strip():
                     if self._save_logger_output.is_set():
                         f.write(logger_output)
                         f.flush()
@@ -122,6 +122,8 @@ class StressRaspberry:
                             first_line_passed = True
                         else:
                             pass
+                else:
+                    continue
 
                 # Make a dictionary out of the output
                 logger_output = self.parse_logger_output_line(logger_output)
