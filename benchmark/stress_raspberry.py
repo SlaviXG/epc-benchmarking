@@ -140,7 +140,8 @@ class StressRaspberry:
                         f.write(logger_output)
                         f.flush()
                 else:
-                    continue
+                    if not self._awaiting_for_feedback.is_set():
+                        break
 
                 try:
                     # Make a dictionary out of the output
@@ -154,7 +155,7 @@ class StressRaspberry:
                 # Set initial temperature if it wasn't set
                 if initial_temperature is None:
                     initial_temperature = logger_output['temp_C_ema']
-                    color_log.log_error(f"{get_current_time()} -- Initial temperature: {initial_temperature} C")
+                    color_log.log_warning(f"{get_current_time()} -- Initial temperature: {initial_temperature} C")
 
                 # Check if there is a need to cool down the device
                 if logger_output['temp_C_ema'] - initial_temperature > MIN_TEMPERATURE_DIFFERENCE:
@@ -164,6 +165,10 @@ class StressRaspberry:
                         previous_cooling_time = time.time()
                 else:
                     if not self._awaiting_for_feedback.is_set():
+                        # Exit if there are no commands left:
+                        if self.command_queue.empty():
+                            break
+
                         # Start saving output
                         self._save_logger_output.set()
 
@@ -183,6 +188,7 @@ class StressRaspberry:
                                 self._awaiting_for_feedback.clear()
                                 self._save_logger_output.clear()
                         else:
+                            # Still waiting for feedback
                             pass
 
         color_log.log_info(f"{get_current_time()} -- Benchmarking finished")
