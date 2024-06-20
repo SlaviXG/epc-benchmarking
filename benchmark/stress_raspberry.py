@@ -12,7 +12,7 @@ from mqtt_system_governor.commander import BaseCommander, init_commander
 # !!!
 
 RASPBERRY_CLIENT_ID = "client1"
-MIN_TEMPERATURE_DIFFERENCE = 0.3
+MIN_TEMPERATURE_DIFFERENCE = 1.5
 LOGGER_STARTING_COMMAND = "sudo fnirsi_usb_power_data_logger/fnirsi_logger.py"
 COMMAND_FEEDBACK_FILE = "command_feedback.txt"
 LOGGER_OUTPUT_FILE = "data_logger.txt"
@@ -30,7 +30,7 @@ class StressRaspberry:
         def __init__(self, broker, port, command_loader_topic, response_topic, jsonify):
             super().__init__(broker, port, command_loader_topic, response_topic, jsonify)
             self._client.on_message = self.on_message
-            
+
         def on_message(self, client, userdata, msg):
             feedback = msg.payload.decode()
             if self._jsonify:
