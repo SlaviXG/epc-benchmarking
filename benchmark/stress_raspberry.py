@@ -1,3 +1,4 @@
+import configparser
 import json
 import os.path
 import subprocess
@@ -5,7 +6,7 @@ from queue import Queue
 from threading import Event
 
 
-from mqtt_system_governor.commander import BaseCommander, init_commander
+from mqtt_system_governor.commander import BaseCommander
 
 # !!!
 # Make sure that jsonify = True and save_feedback = False inside mqtt_system_governor/config.ini
@@ -47,13 +48,24 @@ class StressRaspberry:
                 print(f"(!) Please set the `jsonify` option to True inside mqtt_system_governor/config.ini")
 
     def __init__(self):
-        self.commander = init_commander(os.path.join('mqtt_system_governor', 'config.ini'))
+        self.commander = self.init_commander(os.path.join('mqtt_system_governor', 'config.ini'))
         self.command_queue = Queue()
         self.fill_command_queue()
         self.operator_process = None
         self._power_data_logger_process = None
         self._save_logger_output = Event()
         self._awaiting_for_feedback = Event()
+
+    def init_commander(self, config_path: os.path):
+        config = configparser.ConfigParser()
+        config.read(config_path)
+        broker = os.getenv('MQTT_BROKER') or config['mqtt']['broker']
+        port = int(config['mqtt']['port'])
+        command_loader_topic = config['mqtt']['command_loader_topic']
+        response_topic = config['mqtt']['response_topic']
+        jsonify = config.getboolean('commander', 'jsonify')
+
+        return self.Commander(broker, port, command_loader_topic, response_topic, jsonify)
 
     def fill_command_queue(self):
         # for processor_utilization in range(10, 101, 10):
