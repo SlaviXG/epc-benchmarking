@@ -38,7 +38,7 @@ class StressRaspberry:
                 try:
                     feedback = json.loads(feedback)
                     if feedback['client_id'] == RASPBERRY_CLIENT_ID:
-                        save_feedback_to_file(feedback)
+                        save_feedback_to_file(json.dumps(feedback))
                         FEEDBACK_QUEUE.put(feedback)
                         print(f"Feedback received and saved (command: {feedback['command']})")
                         print(f"{json.dumps(feedback, indent=2)}")
