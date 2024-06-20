@@ -96,7 +96,6 @@ class StressRaspberry:
                     break
 
         self.commander.connect()
-        self.start_power_data_logger()
 
         # Set additional metrics
         first_line_passed = False
@@ -106,6 +105,7 @@ class StressRaspberry:
         print("Starting benchmarking...")
 
         with open(LOGGER_OUTPUT_FILE, 'w') as f:
+            self.start_power_data_logger()
             while True:
                 # Read power data logger output
                 logger_output = self._power_data_logger_process.stdout.readline()
