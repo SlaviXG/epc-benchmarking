@@ -15,7 +15,7 @@ from mqtt_system_governor import color_log
 # !!!
 
 RASPBERRY_CLIENT_ID = "client1"
-MIN_TEMPERATURE_DIFFERENCE = 1.5
+MIN_TEMPERATURE_DIFFERENCE = 10
 LOGGER_STARTING_COMMAND = "sudo fnirsi_usb_power_data_logger/fnirsi_logger.py"
 COMMAND_FEEDBACK_FILE = "command_feedback.txt"
 LOGGER_OUTPUT_FILE = "data_logger.txt"
@@ -145,7 +145,7 @@ class StressRaspberry:
                     if not logger_started:
                         continue
                     # Exit the loop after benchmarking
-                    elif not self._awaiting_for_feedback.is_set():
+                    elif not self._awaiting_for_feedback.is_set() and self.command_queue.empty():
                         break
 
                 try:
@@ -161,15 +161,17 @@ class StressRaspberry:
                 if initial_temperature is None:
                     initial_temperature = logger_output['temp_C_ema']
                     color_log.log_warning(f"{get_current_time()} -- Initial temperature: {initial_temperature} C")
+                    logger_started = True
 
-                # Check if there is a need to cool down the device
-                if logger_output['temp_C_ema'] - initial_temperature > MIN_TEMPERATURE_DIFFERENCE:
-                    self._save_logger_output.clear()
-                    if time.time() - previous_cooling_time > 60:
-                        color_log.log_warning(f"(!) -- {get_current_time()} -- Overheat -- Temporarily paused for cooling down")
-                        previous_cooling_time = time.time()
-                else:
-                    if not self._awaiting_for_feedback.is_set():
+                if not self._awaiting_for_feedback.is_set():
+                    # Check if there is a need to cool down the device
+                    if logger_output['temp_C_ema'] - initial_temperature > MIN_TEMPERATURE_DIFFERENCE:
+                        self._save_logger_output.clear()
+                        if time.time() - previous_cooling_time > 60:
+                            color_log.log_warning(
+                                f"(!) -- {get_current_time()} -- Overheat -- Temporarily paused for cooling down")
+                            previous_cooling_time = time.time()
+                    else:
                         # Exit if there are no commands left:
                         if self.command_queue.empty():
                             break
@@ -185,16 +187,16 @@ class StressRaspberry:
                         # Send the command
                         self.commander.send_command(RASPBERRY_CLIENT_ID, current_command)
                         self._awaiting_for_feedback.set()
+                else:
+                    feedback = FEEDBACK_QUEUE.get()
+                    if feedback is not None:
+                        # Check if the command matches with the last one sent:
+                        if feedback['client_id'] == RASPBERRY_CLIENT_ID and feedback['command'] == current_command:
+                            self._awaiting_for_feedback.clear()
+                            self._save_logger_output.clear()
                     else:
-                        feedback = FEEDBACK_QUEUE.get()
-                        if feedback is not None:
-                            # Check if the command matches with the last one sent:
-                            if feedback['client_id'] == RASPBERRY_CLIENT_ID and feedback['command'] == current_command:
-                                self._awaiting_for_feedback.clear()
-                                self._save_logger_output.clear()
-                        else:
-                            # Still waiting for feedback
-                            pass
+                        # Still waiting for feedback
+                        pass
 
         color_log.log_info(f"{get_current_time()} -- Benchmarking finished")
         print(f"{get_current_time()} -- Processing obtained data")
