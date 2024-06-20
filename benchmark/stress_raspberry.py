@@ -100,7 +100,6 @@ class StressRaspberry:
         self.start_power_data_logger()
 
         # Set additional metrics
-        data_logger_starting_time = time.time()
         first_line_passed = False
         initial_temperature = None
         current_command = None
@@ -117,16 +116,16 @@ class StressRaspberry:
                     if self._save_logger_output.is_set():
                         f.write(logger_output)
                         f.flush()
-                    else:
-                        if not first_line_passed and time.time() - data_logger_starting_time > 5:
-                            first_line_passed = True
-                        else:
-                            pass
                 else:
                     continue
 
-                # Make a dictionary out of the output
-                logger_output = self.parse_logger_output_line(logger_output)
+                try:
+                    # Make a dictionary out of the output
+                    logger_output = self.parse_logger_output_line(logger_output)
+                except Exception as e:
+                    # Occurs when trying to convert string to float, making sure to pass the first logger output line
+                    first_line_passed = True
+                    print(f"First output line passed: ({e})")
 
                 # Set initial temperature if it wasn't set
                 if initial_temperature is None:
