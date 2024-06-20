@@ -119,6 +119,7 @@ class StressRaspberry:
         # Set additional metrics
         first_line_passed = False
         logger_started = False
+        logger_stopped = False
         initial_temperature = None
         current_command = None
         previous_cooling_time = time.time()
@@ -132,6 +133,7 @@ class StressRaspberry:
                 logger_output = self._power_data_logger_process.stdout.readline()
                 if first_line_passed and logger_output == '' and self._power_data_logger_process.poll() is not None:
                     color_log.log_warning(f"{get_current_time()} -- The logger process was stopped.")
+                    logger_stopped = True
                     break
                 if logger_output.strip():
                     if self._save_logger_output.is_set():
@@ -195,5 +197,6 @@ class StressRaspberry:
                         # Still waiting for feedback
                         pass
 
-        color_log.log_info(f"{get_current_time()} -- Benchmarking finished")
-        print(f"{get_current_time()} -- Processing obtained data")
+        if not logger_stopped:
+            color_log.log_info(f"{get_current_time()} -- Benchmarking finished")
+            print(f"{get_current_time()} -- Processing obtained data")
