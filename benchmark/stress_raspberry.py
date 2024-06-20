@@ -131,6 +131,7 @@ class StressRaspberry:
                 # Set initial temperature if it wasn't set
                 if initial_temperature is None:
                     initial_temperature = logger_output['temp_C_ema']
+                    print(f"Initial temperature: {initial_temperature} C")
 
                 # Check if there is a need to cool down the device
                 if logger_output['temp_C_ema'] - initial_temperature > MIN_TEMPERATURE_DIFFERENCE:
