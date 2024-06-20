@@ -27,6 +27,10 @@ def save_feedback_to_file(feedback: str):
 
 class StressRaspberry:
     class Commander(BaseCommander):
+        def __init__(self, broker, port, command_loader_topic, response_topic, jsonify):
+            super().__init__(broker, port, command_loader_topic, response_topic, jsonify)
+            self._client.on_message = self.on_message
+            
         def on_message(self, client, userdata, msg):
             feedback = msg.payload.decode()
             if self._jsonify:
