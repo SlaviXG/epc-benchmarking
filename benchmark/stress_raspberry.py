@@ -162,6 +162,7 @@ class StressRaspberry:
                     color_log.log_warning(f"{get_current_time()} -- Initial temperature: {initial_temperature} C")
                     logger_started = True
 
+                # If not waiting for feedback
                 if not self._awaiting_for_feedback.is_set():
                     # Check if there is a need to cool down the device
                     if logger_output['temp_C_ema'] - initial_temperature > MIN_TEMPERATURE_DIFFERENCE:
@@ -175,17 +176,19 @@ class StressRaspberry:
                         if self.command_queue.empty():
                             break
 
-                        # Start saving output
-                        self._save_logger_output.set()
-
                         # Get the command from the queue
                         current_command = self.command_queue.get()
                         if current_command is None:
                             break
 
+                        # Start saving output
+                        self._save_logger_output.set()
+
                         # Send the command
                         self.commander.send_command(RASPBERRY_CLIENT_ID, current_command)
                         self._awaiting_for_feedback.set()
+
+                # If waiting for feedback
                 else:
                     feedback = FEEDBACK_QUEUE.get()
                     if feedback is not None:
