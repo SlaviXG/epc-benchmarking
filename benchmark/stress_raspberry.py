@@ -49,8 +49,8 @@ class StressRaspberry:
                     if feedback['client_id'] == RASPBERRY_CLIENT_ID:
                         save_feedback_to_file(json.dumps(feedback))
                         FEEDBACK_QUEUE.put(feedback)
-                        print(f"{get_current_time()} -- Feedback saved (command: {feedback['command']})")
-                        print(f"{json.dumps(feedback, indent=2)}")
+                        print(f"{get_current_time()} -- Feedback received and saved (command: {feedback['command']})")
+                        # print(f"{json.dumps(feedback, indent=2)}")
                 except json.JSONDecodeError as e:
                     print(f"(!) -- {get_current_time()} --Please make sure that feedback was sent in a JSON format\n{feedback}")
             else:
