@@ -132,7 +132,7 @@ class StressRaspberry:
                 # Read power data logger output
                 logger_output = self._power_data_logger_process.stdout.readline()
                 if first_line_passed and logger_output == '' and self._power_data_logger_process.poll() is not None:
-                    color_log.log_warning(f"{get_current_time()} -- The logger process was stopped.")
+                    color_log.log_error(f"{get_current_time()} -- The logger process was stopped.")
                     logger_stopped = True
                     break
                 if logger_output.strip():
