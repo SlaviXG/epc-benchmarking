@@ -106,6 +106,15 @@ class StressRaspberry:
             self.operator_process = subprocess.Popen(START_OPERATOR_COMMAND, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, shell=True)
             return self.operator_process
 
+    def terminate_processes(self):
+        if self.operator_process and self.operator_process.poll() is None:
+            self.operator_process.terminate()
+            color_log.log_info(f"{get_current_time()} -- Terminated operator process")
+
+        if self._power_data_logger_process and self._power_data_logger_process.poll() is None:
+            self._power_data_logger_process.terminate()
+            color_log.log_info(f"{get_current_time()} -- Terminated power data logger process")
+
     def run(self):
         operator_process = self.start_operator()
         while True:
@@ -205,5 +214,6 @@ class StressRaspberry:
                         pass
 
         if not logger_stopped:
+            self.terminate_processes()
             color_log.log_info(f"{get_current_time()} -- Benchmarking finished")
             print(f"{get_current_time()} -- Processing obtained data")
