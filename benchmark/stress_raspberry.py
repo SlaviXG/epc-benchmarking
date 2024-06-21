@@ -9,6 +9,7 @@ from threading import Event
 
 from mqtt_system_governor import color_log
 from mqtt_system_governor.commander import BaseCommander
+from postprocessing.synchronize_raspberry import synchronize_output_data
 
 # !!!
 # Make sure that jsonify = True and save_feedback = False inside mqtt_system_governor/config.ini
@@ -169,6 +170,7 @@ class StressRaspberry:
                     logger_output = self.parse_logger_output_line(logger_output)
                 except Exception as e:
                     # Occurs when trying to convert string to float, making sure to pass the first logger output line
+                    f.write(logger_output)
                     first_line_passed = True
                     color_log.log_info(f"{get_current_time()} -- First output line passed: ({e})")
                     continue
@@ -224,5 +226,6 @@ class StressRaspberry:
             color_log.log_info(f"{get_current_time()} -- Benchmarking finished")
             self.terminate_processes()
             print(f"{get_current_time()} -- Postprocessing the data")
+            synchronize_output_data(LOGGER_OUTPUT_FILE, COMMAND_FEEDBACK_FILE)
         else:
             self.terminate_processes()
