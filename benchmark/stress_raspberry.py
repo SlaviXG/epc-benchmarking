@@ -64,6 +64,7 @@ class StressRaspberry:
         self._power_data_logger_process = None
         self._save_logger_output = Event()
         self._awaiting_for_feedback = Event()
+        self.clear_command_feedback_file()
 
     def init_commander(self, config_path: os.path):
         config = configparser.ConfigParser()
@@ -87,20 +88,7 @@ class StressRaspberry:
                                                            stdout=subprocess.PIPE,
                                                            stderr=subprocess.PIPE,
                                                            text=True, shell=True)
-
-    @staticmethod
-    def form_cpu_stress_command(utilization, cores=0, time=ITERATION_TESTING_TIME):
-        return f"stress-ng --cpu {cores} --cpu-load {utilization} --timeout {time}s --metrics-brief"
-
-    @staticmethod
-    def parse_logger_output_line(line):
-        keys = ["timestamp", "sample_in_packet", "voltage_V", "current_A", "dp_V", "dn_V", "temp_C_ema", "energy_Ws",
-                "capacity_As"]
-        values = line.split()
-        values = [float(value) for value in values]
-        result = dict(zip(keys, values))
-        return result
-
+        
     def start_operator(self):
         with open(os.devnull, 'w') as devnull:
             self.operator_process = subprocess.Popen(START_OPERATOR_COMMAND, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, shell=True)
@@ -114,6 +102,23 @@ class StressRaspberry:
         if self._power_data_logger_process and self._power_data_logger_process.poll() is None:
             self._power_data_logger_process.terminate()
             color_log.log_info(f"{get_current_time()} -- Terminated power data logger process")
+
+    @staticmethod
+    def clear_command_feedback_file():
+        open(COMMAND_FEEDBACK_FILE, 'w').close()
+
+    @staticmethod
+    def form_cpu_stress_command(utilization, cores=0, time=ITERATION_TESTING_TIME):
+        return f"stress-ng --cpu {cores} --cpu-load {utilization} --timeout {time}s --metrics-brief"
+
+    @staticmethod
+    def parse_logger_output_line(line):
+        keys = ["timestamp", "sample_in_packet", "voltage_V", "current_A", "dp_V", "dn_V", "temp_C_ema", "energy_Ws",
+                "capacity_As"]
+        values = line.split()
+        values = [float(value) for value in values]
+        result = dict(zip(keys, values))
+        return result
 
     def run(self):
         operator_process = self.start_operator()
