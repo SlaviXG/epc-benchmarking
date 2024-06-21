@@ -22,6 +22,7 @@ ITERATION_TESTING_TIME = 30
 LOGGER_STARTING_COMMAND = "sudo fnirsi_usb_power_data_logger/fnirsi_logger.py"
 COMMAND_FEEDBACK_FILE = "command_feedback.txt"
 LOGGER_OUTPUT_FILE = "data_logger.txt"
+DF_OUTPUT_FILE = "df.csv"
 START_OPERATOR_COMMAND = "python3 mqtt_system_governor/operator.py --config=mqtt_system_governor/config.ini"
 
 FEEDBACK_QUEUE = Queue()
@@ -226,6 +227,7 @@ class StressRaspberry:
             color_log.log_info(f"{get_current_time()} -- Benchmarking finished")
             self.terminate_processes()
             print(f"{get_current_time()} -- Postprocessing the data")
-            synchronize_output_data(LOGGER_OUTPUT_FILE, COMMAND_FEEDBACK_FILE)
+            df = synchronize_output_data(LOGGER_OUTPUT_FILE, COMMAND_FEEDBACK_FILE)
+            df.to_csv(DF_OUTPUT_FILE, index=False)
         else:
             self.terminate_processes()

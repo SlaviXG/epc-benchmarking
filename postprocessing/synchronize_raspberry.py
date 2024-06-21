@@ -114,12 +114,23 @@ def merge_command_and_logger_dfs(command_df, logger_df):
 
 
 def synchronize_output_data(power_data_logger_file: os.path, command_feedback_file: os.path):
+    # Form the data frame
     command_df = form_command_df(command_feedback_file)
     logger_df = form_logger_df(power_data_logger_file)
-    df = merge_command_and_logger_dfs(command_df, logger_df)
-    print(df)
-    df.to_csv('df.csv', index=False)
+    res_df = merge_command_and_logger_dfs(command_df, logger_df)
+
+    # Filter the DataFrame to retain only the specified columns
+    res_df = res_df.loc[:, ['frequency', 'cpu_load', 'real_time', 'bogo_ops', 'bogo_ops_per_sec_real', 'mean_voltage_V',
+                    'mean_current_A', 'mean_temp_C_ema']]
+
+    # Add 'mean_P' and 'efficiency' columns
+    df.loc[:, 'mean_P'] = df['mean_voltage_V'] * df['mean_current_A']
+    df.loc[:, 'efficiency'] = df['bogo_ops_per_sec_real'] / df['mean_P']
+
+    return df
 
 
 if __name__ == '__main__':
-    synchronize_output_data(os.path.join('..', 'data_logger.txt'), os.path.join('..', 'command_feedback.txt'))
+    df = synchronize_output_data(os.path.join('..', 'data_logger.txt'), os.path.join('..', 'command_feedback.txt'))
+    print(df)
+    df.to_csv('df.csv', index=False)
