@@ -14,14 +14,16 @@ from mqtt_system_governor.commander import BaseCommander
 # Make sure that jsonify = True and save_feedback = False inside mqtt_system_governor/config.ini
 # !!!
 
+# Parameters
 RASPBERRY_CLIENT_ID = "client1"
 MIN_TEMPERATURE_DIFFERENCE = 10
 ITERATION_TESTING_TIME = 30
 LOGGER_STARTING_COMMAND = "sudo fnirsi_usb_power_data_logger/fnirsi_logger.py"
 COMMAND_FEEDBACK_FILE = "command_feedback.txt"
 LOGGER_OUTPUT_FILE = "data_logger.txt"
-FEEDBACK_QUEUE = Queue()
 START_OPERATOR_COMMAND = "python3 mqtt_system_governor/operator.py --config=mqtt_system_governor/config.ini"
+
+FEEDBACK_QUEUE = Queue()
 
 
 def save_feedback_to_file(feedback: str):
