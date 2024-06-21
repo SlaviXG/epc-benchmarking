@@ -1,14 +1,14 @@
 import configparser
+import datetime
 import json
-import time, datetime
 import os.path
 import subprocess
+import time
 from queue import Queue
 from threading import Event
 
-
-from mqtt_system_governor.commander import BaseCommander
 from mqtt_system_governor import color_log
+from mqtt_system_governor.commander import BaseCommander
 
 # !!!
 # Make sure that jsonify = True and save_feedback = False inside mqtt_system_governor/config.ini
@@ -190,12 +190,13 @@ class StressRaspberry:
 
                 # If waiting for feedback
                 else:
-                    feedback = FEEDBACK_QUEUE.get()
-                    if feedback is not None:
+                    if not FEEDBACK_QUEUE.empty():
+                        feedback = FEEDBACK_QUEUE.get(timeout=1)
                         # Check if the command matches with the last one sent:
                         if feedback['client_id'] == RASPBERRY_CLIENT_ID and feedback['command'] == current_command:
                             self._awaiting_for_feedback.clear()
                             self._save_logger_output.clear()
+                            FEEDBACK_QUEUE.task_done()
                     else:
                         # Still waiting for feedback
                         pass
