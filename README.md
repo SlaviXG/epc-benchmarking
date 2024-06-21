@@ -17,6 +17,8 @@ git submodule update --init --recursive
 nano benchmark/stress_raspberry.py
 ```
 
+Make sure to set/check that `jsonify=True` and `save_feedback=False` inside `mqtt_system_governor/config.ini`.
+
 ###  Running the test:
 ```bash
 sudo python3 main.py
