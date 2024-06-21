@@ -16,7 +16,7 @@ from mqtt_system_governor.commander import BaseCommander
 
 # Parameters
 RASPBERRY_CLIENT_ID = "client1"
-MIN_TEMPERATURE_DIFFERENCE = 10
+MAX_TEMPERATURE_DIFFERENCE = 0.5
 ITERATION_TESTING_TIME = 30
 LOGGER_STARTING_COMMAND = "sudo fnirsi_usb_power_data_logger/fnirsi_logger.py"
 COMMAND_FEEDBACK_FILE = "command_feedback.txt"
@@ -182,11 +182,13 @@ class StressRaspberry:
                 # If not waiting for feedback
                 if not self._awaiting_for_feedback.is_set():
                     # Check if there is a need to cool down the device
-                    if logger_output['temp_C_ema'] - initial_temperature > MIN_TEMPERATURE_DIFFERENCE:
+                    if logger_output['temp_C_ema'] - initial_temperature > MAX_TEMPERATURE_DIFFERENCE:
                         self._save_logger_output.clear()
                         if time.time() - previous_cooling_time > 60:
                             color_log.log_warning(
-                                f"(!) -- {get_current_time()} -- Overheat -- Temporarily paused for cooling down")
+                                f"(!) -- {get_current_time()} -- Overheat -- Temporarily cooling down -- "
+                                f"Current temperature: {logger_output['temp_C_ema']} C -- Max. expected temperature: "
+                                f"{initial_temperature + MAX_TEMPERATURE_DIFFERENCE} C")
                             previous_cooling_time = time.time()
                     else:
                         # Exit if there are no commands left:
