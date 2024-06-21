@@ -214,6 +214,8 @@ class StressRaspberry:
                         pass
 
         if not logger_stopped:
-            self.terminate_processes()
             color_log.log_info(f"{get_current_time()} -- Benchmarking finished")
-            print(f"{get_current_time()} -- Processing obtained data")
+            self.terminate_processes()
+            print(f"{get_current_time()} -- Postprocessing the data")
+        else:
+            self.terminate_processes()
