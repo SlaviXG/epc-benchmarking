@@ -124,10 +124,10 @@ def synchronize_output_data(power_data_logger_file: os.path, command_feedback_fi
                     'mean_current_A', 'mean_temp_C_ema']]
 
     # Add 'mean_P' and 'efficiency' columns
-    df.loc[:, 'mean_P'] = df['mean_voltage_V'] * df['mean_current_A']
-    df.loc[:, 'efficiency'] = df['bogo_ops_per_sec_real'] / df['mean_P']
+    res_df.loc[:, 'mean_P'] = res_df['mean_voltage_V'] * res_df['mean_current_A']
+    res_df.loc[:, 'efficiency'] = res_df['bogo_ops_per_sec_real'] / res_df['mean_P']
 
-    return df
+    return res_df
 
 
 if __name__ == '__main__':
