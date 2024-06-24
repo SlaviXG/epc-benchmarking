@@ -73,7 +73,7 @@ def form_command_df(command_feedback_file: os.path):
 
 # Forms a logger data frame
 def form_logger_df(power_data_logger_file: os.path):
-    logger_df = pd.read_csv(power_data_logger_file, sep='\s+')
+    logger_df = pd.read_csv(power_data_logger_file, sep=r'\s+')
     logger_df = logger_df[['timestamp', 'voltage_V', 'current_A', 'temp_C_ema']]
 
     # Ensure proper data types
