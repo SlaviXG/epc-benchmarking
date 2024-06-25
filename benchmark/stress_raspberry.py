@@ -17,8 +17,8 @@ from postprocessing.synchronize_raspberry import synchronize_output_data
 
 # Parameters
 RASPBERRY_CLIENT_ID = "client1"
-MAX_TEMPERATURE_DIFFERENCE = 0.5
-ITERATION_TESTING_TIME = 30
+MAX_TEMPERATURE_DIFFERENCE = 30
+ITERATION_TESTING_TIME = 15
 LOGGER_STARTING_COMMAND = "sudo fnirsi_usb_power_data_logger/fnirsi_logger.py"
 COMMAND_FEEDBACK_FILE = "command_feedback.txt"
 LOGGER_OUTPUT_FILE = "data_logger.txt"
@@ -213,7 +213,7 @@ class StressRaspberry:
                 # If waiting for feedback
                 else:
                     if not FEEDBACK_QUEUE.empty():
-                        feedback = FEEDBACK_QUEUE.get(timeout=1)
+                        feedback = FEEDBACK_QUEUE.get(timeout=0)
                         # Check if the command matches with the last one sent:
                         if feedback['client_id'] == RASPBERRY_CLIENT_ID and feedback['command'] == current_command:
                             self._awaiting_for_feedback.clear()
