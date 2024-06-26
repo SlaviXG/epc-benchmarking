@@ -80,10 +80,25 @@ class StressRaspberry:
         return self.Commander(broker, port, command_loader_topic, response_topic, jsonify)
 
     def fill_command_queue(self):
-        for processor_utilization in range(10, 101, 10):
-            for frequency in range(600000, 1800001, 100000):
-                self.command_queue.put(f"sudo cpufreq-set -r -f {frequency}")
-                self.command_queue.put(self.form_cpu_stress_command(processor_utilization))
+        # CPU load test:
+        # for processor_utilization in range(10, 101, 10):
+        #     for frequency in range(600000, 1800001, 100000):
+        #         self.command_queue.put(f"sudo cpufreq-set -r -f {frequency}")
+        #         self.command_queue.put(self.form_cpu_stress_command(processor_utilization))
+
+        # 3 Loops for easier data postprocessing:
+
+        for frequency in range(600000, 1800001, 100000):
+            self.command_queue.put(f"sudo cpufreq-set -r -f {frequency}")
+            self.command_queue.put(f"stress-ng --matrix 0 --timeout {ITERATION_TESTING_TIME}s --metrics-brief")
+
+        for frequency in range(600000, 1800001, 100000):
+            self.command_queue.put(f"sudo cpufreq-set -r -f {frequency}")
+            self.command_queue.put(f"stress-ng --numa 0 --timeout {ITERATION_TESTING_TIME}s --metrics-brief")
+
+        for frequency in range(600000, 1800001, 100000):
+            self.command_queue.put(f"sudo cpufreq-set -r -f {frequency}")
+            self.command_queue.put(f"stress-ng --hdd 0 --timeout {ITERATION_TESTING_TIME}s --metrics-brief")
 
     def start_power_data_logger(self):
         self._power_data_logger_process = subprocess.Popen(LOGGER_STARTING_COMMAND,

@@ -7,18 +7,24 @@ from mqtt_system_governor.json_feedback import parse_feedback
 
 # Function to extract metrics from the output string
 def extract_stress_ng_metrics_from_output(output):
+    metrics = []
     lines = output.split('\n')
     for line in lines:
-        if 'cpu' in line and 'stress-ng: metrc:' in line:
+        if 'stress-ng: metrc:' in line and ('cpu' in line
+                                            or 'matrix' in line
+                                            or 'numa' in line
+                                            or 'hdd' in line):
             parts = line.split()
+            stressor = parts[3]
             bogo_ops = int(parts[4])
             real_time = float(parts[5])
             usr_time = float(parts[6])
             sys_time = float(parts[7])
             bogo_ops_per_sec_real = float(parts[8])
             bogo_ops_per_sec_usr_sys = float(parts[9])
-            return [bogo_ops, real_time, usr_time, sys_time, bogo_ops_per_sec_real, bogo_ops_per_sec_usr_sys]
-    return [None] * 6
+            metrics.append(
+                [stressor, bogo_ops, real_time, usr_time, sys_time, bogo_ops_per_sec_real, bogo_ops_per_sec_usr_sys])
+    return metrics
 
 
 # To extract cpu load
@@ -46,8 +52,12 @@ def form_command_df(command_feedback_file: os.path):
     command_df['output'] = command_df['error']
 
     # Extracting metrics from the output
-    command_df[['bogo_ops', 'real_time', 'usr_time', 'sys_time', 'bogo_ops_per_sec_real', 'bogo_ops_per_sec_usr_sys']] = \
-        command_df['output'].apply(lambda x: pd.Series(extract_stress_ng_metrics_from_output(x)))
+    metrics = command_df['output'].apply(extract_stress_ng_metrics_from_output)
+    expanded_metrics = metrics.explode().apply(pd.Series)
+    expanded_metrics.columns = ['stressor', 'bogo_ops', 'real_time', 'usr_time', 'sys_time', 'bogo_ops_per_sec_real',
+                                'bogo_ops_per_sec_usr_sys']
+
+    command_df = pd.concat([command_df.reset_index(drop=True), expanded_metrics.reset_index(drop=True)], axis=1)
 
     # Extract cpu-load from the command
     command_df['cpu_load'] = command_df['command'].apply(extract_cpu_load)
@@ -59,7 +69,8 @@ def form_command_df(command_feedback_file: os.path):
     command_df = command_df.drop('command', axis=1)
 
     # Reorder columns
-    column_order = ['frequency', 'cpu_load', 'start_time', 'end_time', 'bogo_ops', 'real_time', 'usr_time', 'sys_time',
+    column_order = ['frequency', 'cpu_load', 'start_time', 'end_time', 'stressor', 'bogo_ops', 'real_time', 'usr_time',
+                    'sys_time',
                     'bogo_ops_per_sec_real', 'bogo_ops_per_sec_usr_sys']
     command_df = command_df[column_order]
 
@@ -120,8 +131,9 @@ def synchronize_output_data(power_data_logger_file: os.path, command_feedback_fi
     res_df = merge_command_and_logger_dfs(command_df, logger_df)
 
     # Filter the DataFrame to retain only the specified columns
-    res_df = res_df.loc[:, ['frequency', 'cpu_load', 'real_time', 'bogo_ops', 'bogo_ops_per_sec_real', 'mean_voltage_V',
-                    'mean_current_A', 'mean_temp_C_ema']]
+    res_df = res_df.loc[:,
+             ['frequency', 'cpu_load', 'stressor', 'real_time', 'bogo_ops', 'bogo_ops_per_sec_real', 'mean_voltage_V',
+              'mean_current_A', 'mean_temp_C_ema']]
 
     # Add 'mean_P' and 'efficiency' columns
     res_df.loc[:, 'mean_P'] = res_df['mean_voltage_V'] * res_df['mean_current_A']
