@@ -86,7 +86,11 @@ class StressRaspberry:
         #         self.command_queue.put(f"sudo cpufreq-set -r -f {frequency}")
         #         self.command_queue.put(self.form_cpu_stress_command(processor_utilization))
 
-        # 3 Loops for easier data postprocessing:
+        # 4 Loops for easier data postprocessing:
+
+        for frequency in range(600000, 1800001, 100000):
+            self.command_queue.put(f"sudo cpufreq-set -r -f {frequency}")
+            self.command_queue.put(f"stress-ng --cpu 0 --timeout {ITERATION_TESTING_TIME}s --metrics-brief")
 
         for frequency in range(600000, 1800001, 100000):
             self.command_queue.put(f"sudo cpufreq-set -r -f {frequency}")
