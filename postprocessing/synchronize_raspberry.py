@@ -14,6 +14,7 @@ def extract_stress_ng_metrics_from_output(output):
                                             or 'matrix' in line
                                             or 'numa' in line
                                             or 'hdd' in line):
+            if 'instances' in line: continue
             parts = line.split()
             stressor = parts[3]
             bogo_ops = int(parts[4])
